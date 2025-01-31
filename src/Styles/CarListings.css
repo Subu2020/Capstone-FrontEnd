@@ -147,9 +147,23 @@ body {
 }
 
 /* User menu styles */
+.user-section {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
 .user-icon {
-  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
   cursor: pointer;
+  position: relative;
+}
+
+.username {
+  color: #fff;
+  font-size: 14px;
 }
 
 .user-icon img {
@@ -167,16 +181,18 @@ body {
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   padding: 8px;
+  min-width: 150px;
   margin-top: 10px;
+  z-index: 1000;
 }
 
 .user-menu button {
   width: 100%;
   padding: 8px 16px;
-  border: none;
-  background: none;
-  color: #333;
   text-align: left;
+  background: none;
+  border: none;
+  color: #333;
   cursor: pointer;
   transition: all 0.3s ease;
 }
@@ -184,6 +200,7 @@ body {
 .user-menu button:hover {
   background-color: #ff3838;
   color: white;
+  border-radius: 4px;
 }
 
 /* Responsive design */

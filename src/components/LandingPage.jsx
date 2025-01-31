@@ -2,16 +2,19 @@ import "../styles/LandingPage.css";
 import carLogo from "../images/car-logo.jpg"; // Replace with your logo image
 import carImage from "../images/car-image.jpg"; // Replace with your car image
 import userIcon from "../images/user-icon.png"; // Replace with your user icon image
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { AuthContext } from '../App';
 
 export function LandingPage() {
+  const { isAuthenticated, setIsAuthenticated } = useContext(AuthContext);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const menuRef = useRef(null);
   const aboutRef = useRef(null);
   const homeRef = useRef(null);
   const navigate = useNavigate();
+  const username = localStorage.getItem('username');
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -40,25 +43,30 @@ export function LandingPage() {
       aboutRef.current?.scrollIntoView({ behavior: 'smooth' });
     } else if (path === '/') {
       homeRef.current?.scrollIntoView({ behavior: 'smooth' });
-    } else if (path === '/login') {
-      navigate('/login');
-    } else if (path === '/signup') {
-      navigate('/register');
-    } else if (path === '/profile') {
-      navigate('/profile');
     } else if (path === '/cars') {
-      // Add buy car logic
       navigate('/cars');
-      console.log('Buying a car');
-    } else if (path === '/sell') {
-      // Add sell car logic
-      navigate('/sell');
-      console.log('Selling a car');
     } else if (path === '/service') {
-      // Add service booking logic
       console.log('Booking service');
     } else {
-      console.log(`Navigating to ${path}`);
+      navigate(path);
+    }
+  };
+
+  const handleLogout = () => {
+    // Clear all localStorage data
+    localStorage.removeItem('token');
+    localStorage.removeItem('username');
+    localStorage.removeItem('userToken');
+    setIsAuthenticated(false);
+    navigate('/home');
+    setIsMenuOpen(false);
+  };
+
+  const handleSellClick = () => {
+    if (isAuthenticated) {
+      navigate('/sell');
+    } else {
+      navigate('/login', { state: { from: '/sell' } });
     }
   };
 
@@ -87,13 +95,28 @@ export function LandingPage() {
           </div>
           
           <div className="user-icon" ref={menuRef} onClick={() => setIsMenuOpen(!isMenuOpen)}>
-            <img src={userIcon} alt="User Icon" />
-            {isMenuOpen && (
-              <div className="user-menu">
-                <button onClick={() => handleNavigation('/login')}>Login</button>
-                <button onClick={() => handleNavigation('/register')}>Sign Up</button>
-                <button onClick={() => handleNavigation('/profile')}>Profile</button>
-              </div>
+            {isAuthenticated ? (
+              <>
+                <span className="username">{username}</span>
+                <img src={userIcon} alt="User Icon" />
+                {isMenuOpen && (
+                  <div className="user-menu">
+                    <button onClick={() => navigate('/dashboard')}>Dashboard</button>
+                    <button onClick={() => navigate('/sell')}>Sell Car</button>
+                    <button onClick={handleLogout}>Logout</button>
+                  </div>
+                )}
+              </>
+            ) : (
+              <>
+                <img src={userIcon} alt="User Icon" />
+                {isMenuOpen && (
+                  <div className="user-menu">
+                    <button onClick={() => navigate('/login')}>Login</button>
+                    <button onClick={() => navigate('/register')}>Sign Up</button>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>
@@ -114,7 +137,14 @@ export function LandingPage() {
           <div className="feature-card">
             <ul className="button-list">
               <li><button className="action-btn" onClick={() => handleNavigation('/cars')}>Buy a Car</button></li>
-              <li><button className="action-btn" onClick={() => handleNavigation('/sell')}>Sell Your Car</button></li>
+              <li>
+                <button 
+                  className={`action-btn ${!isAuthenticated ? 'login-required' : ''}`} 
+                  onClick={handleSellClick}
+                >
+                  Sell Your Car
+                </button>
+              </li>
               <li><button className="action-btn" onClick={() => handleNavigation('/service')}>Book Service</button></li>
             </ul>
           </div>

@@ -1,18 +1,21 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import "../styles/CarListings.css";
 import carLogo from "../images/car-logo.jpg";
 import userIcon from "../images/user-icon.png";
+import axios from 'axios';
+import { AuthContext } from '../App';
 
 export function CarListings() {
+  const { isAuthenticated, setIsAuthenticated } = useContext(AuthContext);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState('');
   const [selectedBrands, setSelectedBrands] = useState([]);
   const [expandedCard, setExpandedCard] = useState(null);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const menuRef = useRef(null);
   const cardRef = useRef(null);
   const navigate = useNavigate();
+  const username = localStorage.getItem('username');
 
   const locations = ["BANGALORE", "MUMBAI", "DELHI", "CHENNAI", "HYDERABAD"];
   const brands = ["TOYOTA", "HONDA", "BMW", "AUDI", "MERCEDES", "VOLKSWAGEN"];
@@ -122,9 +125,22 @@ export function CarListings() {
   useEffect(() => {
     const checkLoginStatus = () => {
       const token = localStorage.getItem('token');
-      setIsLoggedIn(!!token);
+      setIsAuthenticated(!!token);
     };
     checkLoginStatus();
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setIsMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
   }, []);
 
   const getAvailableBrands = () => {
@@ -163,7 +179,7 @@ export function CarListings() {
   };
 
   const handleViewMore = (carId) => {
-    if (!isLoggedIn) {
+    if (!isAuthenticated) {
       navigate('/login', { 
         state: { 
           returnPath: '/cars',
@@ -180,13 +196,43 @@ export function CarListings() {
     setExpandedCard(null);
   };
 
-  const handleMakeOffer = (carId) => {
-    console.log(`Making offer for car ${carId}`);
+  const handleMakeOffer = async (carId) => {
+    const token = localStorage.getItem('token');
+    
+    if (!token) {
+      alert('Please login to make an offer');
+      navigate('/login', {
+        state: { returnPath: `/cars` }
+      });
+      return;
+    }
+
+    // Get offer price from user
+    const offerPrice = prompt('Enter your offer price:');
+    
+    if (!offerPrice) return; // User cancelled
+
+    try {
+      await axios.post(`http://localhost:8082/api/cars/${carId}/make-offer`, 
+        { offeredPrice: offerPrice },
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+      
+      alert('Your offer has been submitted successfully!');
+    } catch (error) {
+      console.error('Error making offer:', error);
+      alert('Failed to submit offer. Please try again.');
+    }
   };
 
   const handleLogout = () => {
+    // Clear all localStorage data
     localStorage.removeItem('token');
-    setIsLoggedIn(false);
+    localStorage.removeItem('username');
+    localStorage.removeItem('userToken');
+    setIsAuthenticated(false);
     navigate('/home');
   };
 
@@ -222,21 +268,28 @@ export function CarListings() {
         
         <div className="user-section">
           <div className="user-icon" ref={menuRef} onClick={() => setIsMenuOpen(!isMenuOpen)}>
-            <img src={userIcon} alt="User Icon" />
-            {isMenuOpen && (
-              <div className="user-menu">
-                {isLoggedIn ? (
-                  <>
-                    <button onClick={() => handleNavigation('/profile')}>Profile</button>
+            {isAuthenticated ? (
+              <>
+                <span className="username">{username}</span>
+                <img src={userIcon} alt="User Icon" />
+                {isMenuOpen && (
+                  <div className="user-menu">
+                    <button onClick={() => handleNavigation('/dashboard')}>Dashboard</button>
+                    <button onClick={() => handleNavigation('/sell')}>Sell Car</button>
                     <button onClick={handleLogout}>Logout</button>
-                  </>
-                ) : (
-                  <>
+                  </div>
+                )}
+              </>
+            ) : (
+              <>
+                <img src={userIcon} alt="User Icon" />
+                {isMenuOpen && (
+                  <div className="user-menu">
                     <button onClick={() => handleNavigation('/login')}>Login</button>
                     <button onClick={() => handleNavigation('/register')}>Sign Up</button>
-                  </>
+                  </div>
                 )}
-              </div>
+              </>
             )}
           </div>
         </div>

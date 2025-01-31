@@ -1,10 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import axios from 'axios';
 import './Login.css';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { AuthContext } from '../App';
 
 const Login = () => {
-  let navigate = useNavigate();
+  const { setIsAuthenticated } = useContext(AuthContext);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const from = location.state?.from || '/dashboard';
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -54,19 +58,19 @@ const Login = () => {
       try {
         const response = await axios.post('http://localhost:8082/api/auth/login', formData);
         
-        console.log('Login Successful:', response.data); // Logs token and user details
-
         if (response.data) {
-          // Extract relevant data
           const { username, token } = response.data;
-  
+
           // Store in localStorage
           localStorage.setItem("username", username);
           localStorage.setItem("token", token);
 
-        navigate("/dashboard");
+          // Update authentication state
+          setIsAuthenticated(true);
+          
+          // Navigate to the intended destination
+          navigate(from, { replace: true });
         }
-
       } catch (error) {
         console.error('Login Error:', error.response?.data || error.message);
         setApiError(error.response?.data?.message || 'Login failed. Please try again.');

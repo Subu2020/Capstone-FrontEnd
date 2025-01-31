@@ -2,8 +2,9 @@ import "../styles/dashboard.css";
 import carLogo from "../images/car-logo.jpg";
 import carImage from "../images/car-image.jpg";
 import userIcon from "../images/user-icon.png";
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useContext } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { AuthContext } from '../App';
 
 export function UserDashboard() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -14,6 +15,7 @@ export function UserDashboard() {
   const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [token, setToken] = useState("");
+  const { setIsAuthenticated } = useContext(AuthContext);
 
   useEffect(() => {
     // Retrieve data from localStorage
@@ -56,9 +58,12 @@ export function UserDashboard() {
   }, []);
 
   const handleLogout = () => {
-    // Clear any stored user data/tokens
+    // Clear all localStorage data
+    localStorage.removeItem('token');
+    localStorage.removeItem('username');
     localStorage.removeItem('userToken');
-    navigate('/');
+    setIsAuthenticated(false);
+    navigate('/home');
   };
 
   const handleNavigation = (path) => {
@@ -68,12 +73,14 @@ export function UserDashboard() {
       homeRef.current?.scrollIntoView({ behavior: 'smooth' });
     } else if (path === '/profile') {
       navigate('/profile');
-    } else if (path === '/buy') {
-      console.log('Buying a car');
+    } else if (path === '/cars') {
+      navigate('/cars');
     } else if (path === '/sell') {
-      console.log('Selling a car');
+      navigate('/sell');
     } else if (path === '/service') {
       console.log('Booking service');
+    } else {
+      navigate(path);
     }
   };
 
@@ -125,7 +132,7 @@ export function UserDashboard() {
         <div className="content-right">
           <div className="feature-card">
             <ul className="button-list">
-              <li><button className="action-btn" onClick={() => handleNavigation('/buy')}>Buy a Car</button></li>
+              <li><button className="action-btn" onClick={() => handleNavigation('/cars')}>Buy a Car</button></li>
               <li><button className="action-btn" onClick={() => handleNavigation('/sell')}>Sell Your Car</button></li>
               <li><button className="action-btn" onClick={() => handleNavigation('/service')}>Book Service</button></li>
             </ul>
